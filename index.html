@@ -2,66 +2,27 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Moon VR Journey</title>
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   </head>
   <body>
-<a-scene>
-  <a-sky color="#000005"></a-sky>
+    <a-scene>
+      <a-sky src="https://cdn.glitch.global/110904f4-b106-4444-9343-41f22588c218/milkyway.jpg?v=1678801910000" rotation="0 -90 0"></a-sky>
 
-  <a-entity stars="count: 6000; radius: 500; depth: 1"></a-entity>
+      <a-sphere position="0 0 0" radius="5" 
+                src="https://cdn.glitch.global/110904f4-b106-4444-9343-41f22588c218/earth_atmos_2048.jpg?v=1678801912858"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear">
+      </a-sphere>
 
-  <a-sphere id="earth" position="0 0 0" radius="5" 
-            src="https://cdn.glitch.global/110904f4-b106-4444-9343-41f22588c218/earth_atmos_2048.jpg?v=1678801912858"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 100000; easing: linear">
-  </a-sphere>
+      <a-sphere position="0 0 -150" radius="1.3" 
+                src="https://cdn.glitch.global/110904f4-b106-4444-9343-41f22588c218/moon_1024.jpg?v=1678801916321">
+      </a-sphere>
 
-  <a-sphere id="moon" position="0 0 -150" radius="1.3" 
-            src="https://cdn.glitch.global/110904f4-b106-4444-9343-41f22588c218/moon_1024.jpg?v=1678801916321">
-  </a-sphere>
+      <a-light type="directional" position="10 5 10" intensity="1.2"></a-light>
+      <a-light type="ambient" intensity="0.1"></a-light>
 
-  <a-light type="directional" position="10 10 10" intensity="1.5"></a-light>
-  <a-light type="ambient" intensity="0.2"></a-light>
-
-  <a-entity id="rig" position="0 0 15">
-    <a-camera look-controls></a-camera>
-  </a-entity>
-</a-scene>
-
-    <script>
-      // 移動ロジック：地球 -> 月(旋回) -> 地球
-      function startJourney() {
-        const rig = document.querySelector('#rig');
-        
-        // 1. 月へ出発
-        rig.setAttribute('animation', {
-          property: 'position',
-          to: '0 0 -90',
-          dur: 8000,
-          easing: 'easeInQuad'
-        });
-
-        // 2. 月に到着したら旋回して戻る（簡易タイマー実装）
-        setTimeout(() => {
-          // 月の裏側を通るような軌道
-          rig.setAttribute('animation', {
-            property: 'position',
-            to: '20 0 -100',
-            dur: 3000,
-            easing: 'easeInOutSine'
-          });
-
-          setTimeout(() => {
-            // 地球へ帰還
-            rig.setAttribute('animation', {
-              property: 'position',
-              to: '0 0 10',
-              dur: 8000,
-              easing: 'easeOutQuad'
-            });
-          }, 3500);
-        }, 8500);
-      }
-    </script>
+      <a-entity id="rig" position="0 0 15">
+        <a-camera look-controls></a-camera>
+      </a-entity>
+    </a-scene>
   </body>
 </html>
