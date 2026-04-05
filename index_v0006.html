@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Real Scale Solar System v2.0</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script>
+      // 1. 星空ジェネレーター
+      AFRAME.registerComponent('star-generator', {
+        init: function () {
+          for (let i = 0; i < 2000; i++) {
+            let star = document.createElement('a-sphere');
+            let r = 400000; 
+            let theta = Math.random() * Math.PI * 2;
+            let phi = Math.acos(Math.random() * 2 - 1);
+            star.setAttribute('position', {
+              x: r * Math.sin(phi) * Math.cos(theta),
+              y: r * Math.sin(phi) * Math.sin(theta),
+              z: r * Math.cos(phi)
+            });
+            star.setAttribute('radius', '400');
+            star.setAttribute('shader', 'flat');
+            this.el.appendChild(star);
+          }
+        }
+      });
+
+      // 2. 月追従型・スイングバイ移動
+      AFRAME.registerComponent('manual-move', {
+        init: function () {
+          const camera = this.el.querySelector('a-camera');
+          if (camera) camera.setAttribute('camera', 'near', 0.001);
+          
+          // 公転システム内のアンカーを登録
+          this.anchors = {
+            left: document.querySelector('#anchor-left').object3D,
+            back: document.querySelector('#anchor-back').object3D,
+            right: document.querySelector('#anchor-right').object3D
+          };
+          
+          this.lastPos = new THREE.Vector3();
+        },
+
+        tick: function (time, timeDelta) {
+          const duration = 40000;
+          const t = (time % duration) / duration;
+          
+          // 現在の公転位置に基づいた世界座標をリアルタイム取得
+          const pLeft = this.anchors.left.getWorldPosition(new THREE.Vector3());
+          const pBack = this.anchors.back.getWorldPosition(new THREE.Vector3());
+          const pRight = this.anchors.right.getWorldPosition(new THREE.Vector3());
+
+          // 軌道上の5つの制御点
+          const points = [
+            new THREE.Vector3(4, 0, 0),    // 1. 地球右
+            pLeft,                         // 2. 月の左（公転同期）
+            pBack,                         // 3. 月の真裏（公転同期）
+            pRight,                        // 4. 月の右（公転同期）
+            new THREE.Vector3(-4, 0, 0)    // 5. 地球左
+          ];
+
+          // 毎フレーム、最新の月位置に合わせて曲線を再生成（ワープ防止）
+          const curve = new THREE.CatmullRomCurve3(points, true);
+          curve.tension = 0.5; // 適度な張力で「膨らみ」を抑える
+
+          const pos = curve.getPoint(t);
+          this.el.setAttribute('position', { x: pos.x, y: pos.y, z: pos.z });
+
+          // 進行方向（少し先）を向く
+          const lookAtTarget = curve.getPoint((t + 0.001) % 1);
+          this.el.object3D.lookAt(lookAtTarget);
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <a-scene background="color: #000000" renderer="colorManagement: true;">
+      
+      <a-assets>
+        <img id="earth-tex" src="Earth.jpg">
+        <img id="moon-tex" src="Moon.jpg">
+      </a-assets>
+
+      <a-entity star-generator></a-entity>
+
+      <a-sphere id="sun" position="0 0 23500" radius="109" color="#FFFFFF" shader="flat"></a-sphere>
+      <a-light type="directional" position="0 0 23500" intensity="1.5" target="#earth"></a-light>
+      <a-light type="ambient" intensity="0.05"></a-light>
+
+      <a-sphere id="earth" position="0 0 0" radius="1" 
+                material="src: #earth-tex; roughness: 1; metalness: 0;"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 60000; easing: linear">
+      </a-sphere>
+
+      <a-entity id="moon-orbit-system" position="0 0 0"
+                animation="property: rotation; to: 0 360 0; loop: true; dur: 160000; easing: linear">
+        
+        <a-sphere id="moon" position="0 0 -60" radius="0.27" 
+                  material="src: #moon-tex; roughness: 1; metalness: 0;"
+                  animation="property: rotation; to: 0 360 0; loop: true; dur: 160000; easing: linear">
+        </a-sphere>
+
+        <a-entity id="anchor-left" position="-0.285 0 -60"></a-entity>
+        <a-entity id="anchor-back" position="0 0 -60.285"></a-entity>
+        <a-entity id="anchor-right" position="0.285 0 -60"></a-entity>
+      </a-entity>
+
+      <a-entity id="rig" manual-move>
+        <a-camera look-controls far="500000"></a-camera>
+      </a-entity>
+      
+    </a-scene>
+  </body>
+</html>
